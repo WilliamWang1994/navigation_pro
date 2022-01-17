@@ -24,6 +24,7 @@ class ServerProcess:
         conn.close()
 
     async def listen_command(self, conn, addr):
+        pass
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
