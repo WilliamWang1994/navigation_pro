@@ -1,0 +1,10 @@
+<data>
+    <rtsp_address>rtsp://admin:admin123@192.168.5.64:554/h264/ch1/main/av_stream</rtsp_address>
+<!--    <rtsp_address>rtsp</rtsp_address>-->
+    <fps>30</fps>
+    <log_level>10</log_level>
+    <image_upload_address>http://192.168.3.99:8888/uploadphotoTest</image_upload_address>
+    <alarm_upload_address>http://192.168.3.99:8888/vision/videoAlarm/saveVideoAlarm</alarm_upload_address>
+    <plan_id_interface>http://192.168.3.99:8888/vision/videoAlarm/getMapCache</plan_id_interface>
+    <robot_id>d1b1cb71c22842a596c94115632f78ff</robot_id>
+</data>

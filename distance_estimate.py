@@ -47,17 +47,36 @@ def calculate_distance():
     """
     测距用guide物应该为一个矩形物体，最好是正方形。
     F = λ（H/h）f
-    F：物距
+    F：物距 单位：cm
     λ：单位换算因子
     H:实物尺寸 单位：cm
     h:成像尺寸 单位：像素点
     f:焦距  单位：mm
     :return:
     """
+    pass
+
+
+def get_f():
+    return 0.1
 
 
 def generate_lambda():
-    pass
+    """
+    λ = F / （H/h）f
+    F：物距 单位：cm
+    λ：单位换算因子
+    H:实物尺寸 单位：cm
+    h:成像尺寸 单位：像素点
+    f:焦距  单位：mm
+    :return:
+    """
+    f = get_f()
+    F = 10
+    H = 10
+    h = 30
+
+    return F / (H/h)*f
 
 
 def main():
@@ -67,4 +86,15 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
+    cap = cv2.VideoCapture("rtsp://admin:admin123@192.168.5.64:554/h264/ch1/main/av_stream")
+    # write_cap = cv2.VideoWriter("3hao.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 20.0, (1280, 720))
+    while 1:
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        cv2.imshow("frame", frame)
+        # write_cap.write(frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    # write_cap.release()
+    cap.release()
