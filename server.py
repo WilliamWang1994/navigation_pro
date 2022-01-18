@@ -1,5 +1,3 @@
-import socket
-import sys
 import asyncio
 
 
@@ -10,36 +8,52 @@ class ServerProcess:
         self.num = 2
         self.send_flag = False
 
-    async def server_link(self, conn, addr):
-        while self.send_flag:
-            try:
-                data = conn.recv(1024)
-                if data:
-                    print("from {0}:".format(addr), data.decode('utf-8'))
-                else:
+    async def send_msg(self, conn):
+        while 1:
+            if self.send_flag:
+                try:
+                    conn.write(self.get_data().encode())
+                    await conn.drain()
+                    await asyncio.sleep(1)
+                except:
                     break
-            except Exception:
-                break
+            else:
+                await asyncio.sleep(0.1)
 
-        conn.close()
+    async def listen_command(self, reader, writer):
+        while 1:
+            data = await reader.read(100)
+            message = data.decode()
+            if not message:
+                writer.close()
+                raise ConnectionError
+            if message == "begin":
+                self.send_flag = True
+            if message == "end":
+                self.send_flag = False
 
-    async def listen_command(self, conn, addr):
-        pass
+    def get_data(self):
+        return 'hello'
 
-    def server_start(self):
-        s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s_pro.bind((self.ipaddr, self.port))
-        s_pro.listen(self.num)
-        print('Waiting link...')
-        while True:
-            conn, addr = s_pro.accept()
-            print("Success connect from ", addr)
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self.server_link(conn, addr))
-            print("end")
+    async def wait_connect(self):
+        while 1:
+            server = await asyncio.start_server(self.task_distribute, self.ipaddr, self.port)
+            async with server:
+                await server.serve_forever()
+
+    async def task_distribute(self, reader, sender):
+        task1 = asyncio.ensure_future(self.send_msg(sender))
+        task2 = asyncio.ensure_future(self.listen_command(reader, sender))
+        try:
+            await asyncio.gather(task1, task2)
+        except ConnectionError:
+            task1.cancel()
+            task2.cancel()
+
+    def __call__(self):
+        asyncio.run(self.wait_connect())
 
 
 if __name__ == '__main__':
-    server = ServerProcess()
-    server.server_start()
+    se = ServerProcess()
+    se()
