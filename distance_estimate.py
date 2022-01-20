@@ -85,7 +85,18 @@ def main():
     match_algorithm(template, img)
 
 
+def zbar_test():
+    import pyzbar
+    img = cv2.cvtColor(cv2.imread("zbar-location.png"), cv2.COLOR_BGR2GRAY)
+    import zbar
+    scanner = zbar.Scanner()
+    results = scanner.scan(img)
+    for result in results:
+        print(result.type, result.data, result.quality, result.position)
+
+
 if __name__ == '__main__':
+    zbar_test()
     cap = cv2.VideoCapture("rtsp://admin:admin123@192.168.5.64:554/h264/ch1/main/av_stream")
     # write_cap = cv2.VideoWriter("3hao.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 20.0, (1280, 720))
     while 1:
