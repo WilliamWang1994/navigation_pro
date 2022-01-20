@@ -1,4 +1,36 @@
 import asyncio
+import time
+from xml.dom import minidom
+import cv2
+
+
+class Algorithm:
+    def __init__(self):
+        file = minidom.parse('config/config.xml')
+        self.rtsp_address = file.getElementsByTagName('rtsp_address')[0].firstChild.data
+        self.fps = file.getElementsByTagName('fps')[0].firstChild.data
+        self.cap = None
+        self.current_image = None
+
+    async def start_stream(self):
+        self.cap = cv2.VideoCapture(self.rtsp_address)
+        while self.cap.isOpened():
+            start_time = time.time()
+            ret, frame = self.cap.read()
+            self.current_image = frame
+            await asyncio.sleep(1/self.fps - (time.time() - start_time))
+
+    def release_stream(self):
+        self.cap.release()
+
+    def get_lane(self):
+        return "left"
+
+    def get_distance(self):
+        return "10"
+
+    def __call__(self):
+        return {"lane": self.get_lane(), "distance": self.get_distance()}
 
 
 class ServerProcess:
@@ -7,12 +39,22 @@ class ServerProcess:
         self.port = 10000
         self.num = 2
         self.send_flag = False
+        self.algor = Algorithm()
+
+    def __call__(self):
+        asyncio.run(self.wait_connect())
+
+    async def wait_connect(self):
+        while 1:
+            server = await asyncio.start_server(self.task_distribute, self.ipaddr, self.port)
+            async with server:
+                await server.serve_forever()
 
     async def send_msg(self, conn):
         while 1:
             if self.send_flag:
                 try:
-                    conn.write(self.get_data().encode())
+                    conn.write(self.algor().encode())
                     await conn.drain()
                     await asyncio.sleep(1)
                 except:
@@ -29,17 +71,11 @@ class ServerProcess:
                 raise ConnectionError
             if message == "begin":
                 self.send_flag = True
+                await self.algor.start_stream()
             if message == "end":
                 self.send_flag = False
-
-    def get_data(self):
-        return 'hello'
-
-    async def wait_connect(self):
-        while 1:
-            server = await asyncio.start_server(self.task_distribute, self.ipaddr, self.port)
-            async with server:
-                await server.serve_forever()
+                self.algor.release_stream()
+                # TODO start_stream coroutine
 
     async def task_distribute(self, reader, sender):
         task1 = asyncio.ensure_future(self.send_msg(sender))
@@ -49,9 +85,6 @@ class ServerProcess:
         except ConnectionError:
             task1.cancel()
             task2.cancel()
-
-    def __call__(self):
-        asyncio.run(self.wait_connect())
 
 
 if __name__ == '__main__':
