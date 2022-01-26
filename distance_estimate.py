@@ -86,13 +86,16 @@ def main():
 
 
 def zbar_test():
-    import pyzbar
-    img = cv2.cvtColor(cv2.imread("zbar-location.png"), cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(cv2.imread("123.jpg"), cv2.COLOR_BGR2GRAY)
     import zbar
     scanner = zbar.Scanner()
     results = scanner.scan(img)
     for result in results:
         print(result.type, result.data, result.quality, result.position)
+
+
+def get_distance(frame):
+    return 10
 
 
 if __name__ == '__main__':

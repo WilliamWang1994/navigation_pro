@@ -79,35 +79,44 @@ def visualize_lines(frame, lines):
     return lines_visualize
 
 
-# The video feed is read in as a VideoCapture object
-cap = cv2.VideoCapture("input.mp4")
-
-while cap.isOpened():
-    # ret = a boolean return value from getting the frame, frame = the current frame being projected in the video
-    ret, frame = cap.read()
-    if not ret:
-        break
+def get_lane(frame):
     canny = do_canny(frame)  # canny边缘检测
-    # cv2.imshow("canny", canny)
-    # plt.imshow(frame)
-    # plt.show()
     segment = do_segment(canny)  # 手工分割
-    # cv2.imshow("segment", segment)
-    # cv2.waitKey(0)
     hough = cv2.HoughLinesP(segment, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=50)
-    #  霍夫变换,确定车道线
     lines = calculate_lines(frame, hough)
-    # Visualizes the lines
-    lines_visualize = visualize_lines(frame, lines) #显示车道线
-    cv2.imshow("hough", lines_visualize)
-    cv2.waitKey(0)
-    #  Overlays lines on frame by taking their weighted sums and adding an arbitrary scalar value of 1 as the gamma argument
-    output = cv2.addWeighted(frame, 0.9, lines_visualize, 1, 1)  # 车道和原始图片叠加
-    # Opens a new window and displays the output frame
-    cv2.imshow("output", output)
-    # Frames are read by intervals of 10 milliseconds. The programs breaks out of the while loop when the user presses the 'q' key
-    if cv2.waitKey(10) & 0xFF == ord('q'):
-        break
-# The following frees up resources and closes all windows
-cap.release()
-cv2.destroyAllWindows()
+    return "left"
+
+
+if __name__ == '__main__':
+    # The video feed is read in as a VideoCapture object
+    cap = cv2.VideoCapture("input.mp4")
+
+    while cap.isOpened():
+        # ret = a boolean return value from getting the frame, frame = the current frame being projected in the video
+        ret, frame = cap.read()
+        if not ret:
+            break
+        canny = do_canny(frame)  # canny边缘检测
+        # cv2.imshow("canny", canny)
+        # plt.imshow(frame)
+        # plt.show()
+        segment = do_segment(canny)  # 手工分割
+        # cv2.imshow("segment", segment)
+        # cv2.waitKey(0)
+        hough = cv2.HoughLinesP(segment, 2, np.pi / 180, 100, np.array([]), minLineLength=100, maxLineGap=50)
+        #  霍夫变换,确定车道线
+        lines = calculate_lines(frame, hough)
+        # Visualizes the lines
+        lines_visualize = visualize_lines(frame, lines)  # 显示车道线
+        # cv2.imshow("hough", lines_visualize)
+        # cv2.waitKey(0)
+        #  Overlays lines on frame by taking their weighted sums and adding an arbitrary scalar value of 1 as the gamma argument
+        output = cv2.addWeighted(frame, 0.9, lines_visualize, 1, 1)  # 车道和原始图片叠加
+        # Opens a new window and displays the output frame
+        cv2.imshow("output", output)
+        # Frames are read by intervals of 10 milliseconds. The programs breaks out of the while loop when the user presses the 'q' key
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+    # The following frees up resources and closes all windows
+    cap.release()
+    cv2.destroyAllWindows()
