@@ -2,6 +2,8 @@ import asyncio
 import time
 from xml.dom import minidom
 import cv2
+import distance_estimate
+import lane_dete
 
 
 class Algorithm:
@@ -24,10 +26,10 @@ class Algorithm:
         self.cap.release()
 
     def get_lane(self):
-        return "left"
+        return lane_dete.get_lane(self.current_image)
 
     def get_distance(self):
-        return "10"
+        return distance_estimate.get_distance(self.current_image)
 
     def __call__(self):
         return {"lane": self.get_lane(), "distance": self.get_distance()}
@@ -76,7 +78,6 @@ class ServerProcess:
             if message == "end":
                 self.send_flag = False
                 self.algor.release_stream()
-                # TODO start_stream coroutine
 
     async def task_distribute(self, reader, sender):
         task1 = asyncio.ensure_future(self.send_msg(sender))
