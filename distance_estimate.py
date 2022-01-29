@@ -47,14 +47,18 @@ def calculate_distance():
     """
     测距用guide物应该为一个矩形物体，最好是正方形。
     F = λ（H/h）f
-    F：物距 单位：cm
+    F：物距 单位：mm
     λ：单位换算因子
-    H:实物尺寸 单位：cm
+    H:实物尺寸 单位：mm
     h:成像尺寸 单位：像素点
     f:焦距  单位：mm
     :return:
     """
-    pass
+    h = 62
+    H = 193
+    lambda_f = 680.8
+    distance = lambda_f*(H/h)
+    return distance
 
 
 def get_f():
@@ -63,7 +67,7 @@ def get_f():
 
 def generate_lambda():
     """
-    λ = F / （H/h）f
+    λ = F / (（H/h）f)
     F：物距 单位：cm
     λ：单位换算因子
     H:实物尺寸 单位：cm
@@ -72,10 +76,10 @@ def generate_lambda():
     :return:
     """
     f = get_f()
-    F = 10
-    H = 10
-    h = 30
-
+    F = 1057
+    H = 193
+    h = 124.31
+    lambda_f = F / (H/h)
     return F / (H/h)*f
 
 
@@ -86,16 +90,70 @@ def main():
 
 
 def zbar_test():
-    import pyzbar
-    img = cv2.cvtColor(cv2.imread("zbar-location.png"), cv2.COLOR_BGR2GRAY)
-    import zbar
-    scanner = zbar.Scanner()
-    results = scanner.scan(img)
+    img = cv2.cvtColor(cv2.imread("123.jpg"), cv2.COLOR_BGR2GRAY)
+    from pyzbar.pyzbar import decode as zbdecode
+    # scanner = pyzbar.Scanner()
+    # results = scanner.scan(img)
+    results = zbdecode(img)
     for result in results:
         print(result.type, result.data, result.quality, result.position)
 
 
+def calibration():
+    import cv2
+    import numpy as np
+    import glob
+
+    # 相机标定
+    criteria = (cv2.TERM_CRITERIA_MAX_ITER | cv2.TERM_CRITERIA_EPS, 30, 0.001)
+
+    # 获取标定板角点的位置
+    objp = np.zeros((6 * 9, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)  # 将世界坐标系建在标定板上，所有点的Z坐标全部为0，所以只需要赋值x和y
+
+    obj_points = []  # 存储3D点
+    img_points = []  # 存储2D点
+
+    images = glob.glob(r"C:\\*.jpg")  # 黑白棋盘的图片路径
+    i = 0
+    for fname in images:
+        img = cv2.imread(fname)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        size = gray.shape[::-1]
+        ret, corners = cv2.findChessboardCorners(gray, (9, 6), None)
+
+        if ret:
+
+            obj_points.append(objp)
+
+            corners2 = cv2.cornerSubPix(gray, corners, (5, 5), (-1, -1), criteria)  # 在原角点的基础上寻找亚像素角点
+            # print(corners2)
+            if [corners2]:
+                img_points.append(corners2)
+            else:
+                img_points.append(corners)
+
+            cv2.drawChessboardCorners(img, (9, 6), corners, ret)  # 记住，OpenCV的绘制函数一般无返回值
+            i += 1;
+            cv2.imwrite(r'Calibration_IMG\conimg' + str(i) + '.jpg', img)
+            cv2.waitKey(150)
+
+    print(len(img_points))
+    cv2.destroyAllWindows()
+
+    # 标定
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, size, None, None)
+
+    print("ret:", ret)
+    print("mtx:\n", mtx)  # 内参数矩阵--内参
+    print("dist:\n", dist)  # 畸变系数--内参
+    print("rvecs:\n", rvecs)  # 旋转向量--外参
+    print("tvecs:\n", tvecs)  # 平移向量--外参
+
+
 if __name__ == '__main__':
+    # calculate_distance()
+    # generate_lambda()
     zbar_test()
     cap = cv2.VideoCapture("rtsp://admin:admin123@192.168.5.64:554/h264/ch1/main/av_stream")
     # write_cap = cv2.VideoWriter("3hao.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 20.0, (1280, 720))

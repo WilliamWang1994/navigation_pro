@@ -8,7 +8,7 @@ class Algorithm:
     def __init__(self):
         file = minidom.parse('config/config.xml')
         self.rtsp_address = file.getElementsByTagName('rtsp_address')[0].firstChild.data
-        self.fps = file.getElementsByTagName('fps')[0].firstChild.data
+        self.fps = float(file.getElementsByTagName('fps')[0].firstChild.data)
         self.cap = None
         self.current_image = None
 
@@ -54,6 +54,7 @@ class ServerProcess:
         while 1:
             if self.send_flag:
                 try:
+                    info = self.algor().encode()
                     conn.write(self.algor().encode())
                     await conn.drain()
                     await asyncio.sleep(1)
