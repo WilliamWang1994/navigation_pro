@@ -37,7 +37,6 @@ def calculate_lines(frame, lines):
     for line in lines:
         # Reshapes line from 2D array to 1D array
         x1, y1, x2, y2 = line.reshape(4)
-        # Fits a linear polynomial to the x and y coordinates and returns a vector of coefficients which describe the slope and y-intercept
         parameters = np.polyfit((x1, x2), (y1, y2), 1)
         slope = parameters[0]
         y_intercept = parameters[1]

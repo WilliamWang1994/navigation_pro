@@ -2,6 +2,7 @@ import asyncio
 import time
 from xml.dom import minidom
 import cv2
+import json
 import distance_estimate
 import lane_dete
 
@@ -26,9 +27,11 @@ class Algorithm:
         self.cap.release()
 
     def get_lane(self):
+        # return "left"
         return lane_dete.get_lane(self.current_image)
 
     def get_distance(self):
+        # return "0.5"
         return distance_estimate.get_distance(self.current_image)
 
     def __call__(self):
@@ -55,13 +58,14 @@ class ServerProcess:
     async def send_msg(self, conn):
         while 1:
             if self.send_flag:
-                try:
-                    info = self.algor().encode()
-                    conn.write(self.algor().encode())
-                    await conn.drain()
-                    await asyncio.sleep(1)
-                except:
-                    break
+                # try:
+                print("send message")
+                info = self.algor()
+                conn.write(json.dumps(info, indent=2).encode('utf-8'))
+                await conn.drain()
+                await asyncio.sleep(1)
+                # except:
+                #     break
             else:
                 await asyncio.sleep(0.1)
 
@@ -74,9 +78,11 @@ class ServerProcess:
                 raise ConnectionError
             if message == "begin":
                 self.send_flag = True
+                print("begin")
                 await self.algor.start_stream()
             if message == "end":
                 self.send_flag = False
+                print("end")
                 self.algor.release_stream()
 
     async def task_distribute(self, reader, sender):
